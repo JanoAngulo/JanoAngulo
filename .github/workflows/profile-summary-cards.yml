@@ -26,7 +26,7 @@ jobs:
           BRANCH_NAME: main
           AUTO_PUSH: false
 
-      # Work account -> profile-summary-card-output/github_dark_dimmed/
+      # Work account -> profile-summary-card-output/onedark/
       # Uses a work-account PAT for private-repo commit counts. That PAT
       # cannot push to this repo, so AUTO_PUSH must stay off here.
       - uses: vn7n24fzkq/github-profile-summary-cards@release
@@ -35,7 +35,7 @@ jobs:
         with:
           USERNAME: johnrusselangulo-cp
           UTC_OFFSET: 8
-          THEME: github_dark_dimmed
+          THEME: onedark
           BRANCH_NAME: main
           AUTO_PUSH: false
 

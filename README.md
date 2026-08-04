@@ -107,13 +107,13 @@ I'm **Jano** — a UI/UX designer and front-end developer from **Bulacan, PH** w
 </p>
 
 <p align="center">
-  <img width="32%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark_dimmed/3-stats.svg" alt="Work GitHub stats" />
-  <img width="32%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark_dimmed/2-most-commit-language.svg" alt="Work most used languages" />
+  <img width="32%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/onedark/3-stats.svg" alt="Work GitHub stats" />
+  <img width="32%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/onedark/2-most-commit-language.svg" alt="Work most used languages" />
 </p>
 
 <p align="center">
-    <img width="30%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark_dimmed/4-productive-time.svg" alt="Work productive time" />
-  <img width="62%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark_dimmed/0-profile-details.svg" alt="Work profile details" />
+    <img width="30%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/onedark/4-productive-time.svg" alt="Work productive time" />
+  <img width="62%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/onedark/0-profile-details.svg" alt="Work profile details" />
 </p>
 
 ---
