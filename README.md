@@ -88,14 +88,14 @@ I'm **Jano** — a UI/UX designer and front-end developer from **Bulacan, PH** w
 **`PERSONAL`** &nbsp;·&nbsp; [@JanoAngulo](https://github.com/JanoAngulo)
 
 <p align="center">
-  <img width="32%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark/3-stats.svg" alt="Personal GitHub stats" />
-  <img width="32%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark/2-most-commit-language.svg" alt="Most used languages" />
+  <img width="32%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark/3-stats.svg?v=2" alt="Personal GitHub stats" />
+  <img width="32%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark/2-most-commit-language.svg?v=2" alt="Most used languages" />
 
 </p>
 
 <p align="center">
-    <img width="30%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark/4-productive-time.svg" alt="Productive time" />
-  <img width="62%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark/0-profile-details.svg" alt="Profile details" />
+    <img width="30%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark/4-productive-time.svg?v=2" alt="Productive time" />
+  <img width="62%" src="https://raw.githubusercontent.com/JanoAngulo/JanoAngulo/main/profile-summary-card-output/github_dark/0-profile-details.svg?v=2" alt="Profile details" />
 </p>
 
 <br/>
