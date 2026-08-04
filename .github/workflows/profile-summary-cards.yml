@@ -26,6 +26,14 @@ jobs:
           BRANCH_NAME: main
           AUTO_PUSH: false
 
+      # The action wipes ALL of profile-summary-card-output/ on each run,
+      # not just its own theme. Stash the personal cards before the work
+      # step deletes them, then restore afterwards.
+      - name: Stash personal cards
+        run: |
+          rm -rf "$RUNNER_TEMP/personal-cards"
+          cp -r profile-summary-card-output/github_dark "$RUNNER_TEMP/personal-cards"
+
       # Work account -> profile-summary-card-output/onedark/
       # Uses a work-account PAT for private-repo commit counts. That PAT
       # cannot push to this repo, so AUTO_PUSH must stay off here.
@@ -38,6 +46,10 @@ jobs:
           THEME: onedark
           BRANCH_NAME: main
           AUTO_PUSH: false
+
+      # Restore the personal cards the work step wiped.
+      - name: Restore personal cards
+        run: cp -r "$RUNNER_TEMP/personal-cards" profile-summary-card-output/github_dark
 
       # Single push with the workflow token, which owns this repo.
       - name: Commit and push cards
