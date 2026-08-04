@@ -12,6 +12,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      # Personal account -> profile-summary-card-output/github_dark/
       - uses: vn7n24fzkq/github-profile-summary-cards@release
         env:
           GITHUB_TOKEN: ${{ secrets.SUMMARY_GITHUB_TOKEN }}
@@ -19,4 +21,16 @@ jobs:
           USERNAME: JanoAngulo
           UTC_OFFSET: 8
           THEME: github_dark
+          BRANCH_NAME: main
+
+      # Work account -> profile-summary-card-output/github_dark_dimmed/
+      # Separate theme = separate output folder, so it never overwrites
+      # the personal cards above. Uses a work-account PAT for private repos.
+      - uses: vn7n24fzkq/github-profile-summary-cards@release
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORK_GITHUB_TOKEN }}
+        with:
+          USERNAME: johnrusselangulo-cp
+          UTC_OFFSET: 8
+          THEME: github_dark_dimmed
           BRANCH_NAME: main
