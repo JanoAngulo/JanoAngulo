@@ -34,7 +34,9 @@ jobs:
           rm -rf "$RUNNER_TEMP/personal-cards"
           cp -r profile-summary-card-output/github_dark "$RUNNER_TEMP/personal-cards"
 
-      # Work account -> profile-summary-card-output/onedark/
+      # Work account, same github_dark theme so colors match the personal
+      # cards. It also outputs to a github_dark folder, so we rename it to
+      # work/ afterwards to avoid colliding with the personal cards.
       # Uses a work-account PAT for private-repo commit counts. That PAT
       # cannot push to this repo, so AUTO_PUSH must stay off here.
       - uses: vn7n24fzkq/github-profile-summary-cards@release
@@ -43,13 +45,17 @@ jobs:
         with:
           USERNAME: johnrusselangulo-cp
           UTC_OFFSET: 8
-          THEME: onedark
+          THEME: github_dark
           BRANCH_NAME: main
           AUTO_PUSH: false
 
-      # Restore the personal cards the work step wiped.
-      - name: Restore personal cards
-        run: cp -r "$RUNNER_TEMP/personal-cards" profile-summary-card-output/github_dark
+      # Move the work cards to work/ and restore the personal cards the
+      # work step wiped, so both sets survive with identical colors.
+      - name: Separate work cards and restore personal
+        run: |
+          rm -rf profile-summary-card-output/work
+          mv profile-summary-card-output/github_dark profile-summary-card-output/work
+          cp -r "$RUNNER_TEMP/personal-cards" profile-summary-card-output/github_dark
 
       # Single push with the workflow token, which owns this repo.
       - name: Commit and push cards
