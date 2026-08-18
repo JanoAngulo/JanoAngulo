@@ -26,7 +26,7 @@ HALF DESIGNER.  HALF DEVELOPER.  FULLY SHIPPING.
 
 > *Designing seamless journeys, one pixel at a time.*
 
-I'm **Jano** — a UI/UX designer and front-end developer from **Bulacan, PH** with **3+ years** building interfaces that feel *considered*. Half my day lives in Figma, the other half in code. I care about typography, motion, and the small details that make a site feel right.
+I'm **Jano** — a UI/UX designer and front-end developer from **Bulacan, PH** with **4+ years** building interfaces that feel *considered*. Half my day lives in Figma, the other half in code. I care about typography, motion, and the small details that make a site feel right.
 
 `PRACTICE` &nbsp;&nbsp; Front-end · UI/UX · Motion · Vector  <br/>
 `SHIPPING` &nbsp;&nbsp; [JRLA v4](https://github.com/JanoAngulo/JRLA-New-Website-v4) — Vue 3 · Vite 8 · Tailwind  <br/>
