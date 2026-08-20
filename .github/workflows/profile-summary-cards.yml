@@ -52,13 +52,43 @@ jobs:
             case "$code" in
               200)
                 # grep/sed instead of jq: no extra tool dependency.
-                login=$(tr ',' '
-' < "$body" | grep -m1 '"login"' | sed 's/.*"login"[[:space:]]*:[[:space:]]*"\([^"]*\)".*//')
+                login=$(tr ',' '\n' < "$body" | sed -n 's/.*"login"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
                 if [ "$login" != "$expected" ]; then
                   echo "::error::Secret $name authenticates as '$login', but '$expected' was expected. Wrong token in the wrong secret."
                   fail=1
                 else
                   echo "$name -> $login (ok)"
+                  # REST /user is not a sufficient check. The action reads the
+                  # contribution calendar, which only exists in the GraphQL
+                  # API, and GraphQL rejects most fine-grained PATs with 401
+                  # even when REST accepts them. Probe the exact query shape
+                  # the action needs so a fine-grained token fails here with a
+                  # useful message instead of mid-run with a bare AxiosError.
+                  gql_body=$(mktemp)
+                  gql_code=$(curl -sS -o "$gql_body" -w '%{http_code}' \
+                    -X POST \
+                    -H "Authorization: Bearer $token" \
+                    -H "Content-Type: application/json" \
+                    -d '{"query":"{viewer{contributionsCollection{contributionCalendar{totalContributions}}}}"}' \
+                    https://api.github.com/graphql)
+
+                  if [ "$gql_code" = "401" ]; then
+                    echo "::error::Secret $name passes REST but is rejected by GraphQL with 401. This is what a fine-grained PAT looks like here. Replace it with a *classic* PAT (Tokens (classic)) on the $expected account, scopes read:user and repo."
+                    fail=1
+                  elif [ "$gql_code" != "200" ]; then
+                    echo "::error::Secret $name got HTTP '$gql_code' from the GraphQL API."
+                    fail=1
+                  elif grep -q '"errors"' "$gql_body"; then
+                    # GraphQL answers scope and SSO failures with 200 + an
+                    # errors array, so the status code alone would pass them.
+                    echo "::error::Secret $name reached GraphQL but the query failed. Usually a missing scope or unauthorized SAML SSO. Response:"
+                    head -c 500 "$gql_body"
+                    echo
+                    fail=1
+                  else
+                    total=$(sed -n 's/.*"totalContributions"[[:space:]]*:[[:space:]]*\([0-9]*\).*/\1/p' "$gql_body")
+                    echo "  $name graphql ok (totalContributions=${total:-?})"
+                  fi
                 fi
                 ;;
               401)
