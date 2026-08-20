@@ -2,7 +2,12 @@ name: GitHub Profile Summary Cards
 
 on:
   schedule:
-    - cron: "0 0 * * *" # daily at 00:00 UTC
+    # Monthly, not "*/30". A day-of-month step (*/30) fires on the 1st AND the
+    # 31st, which is twice in most months - not every 30 days. The 1st of each
+    # month is the correct ~30 day cadence.
+    # Off-peak minute on purpose: scheduled runs at :00 are the most likely to
+    # be delayed or dropped by GitHub under load.
+    - cron: "17 3 1 * *" # 1st of each month, 03:17 UTC
   workflow_dispatch:
 
 jobs:
@@ -13,10 +18,91 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Both accounts are required, so validate both PATs up front. Without
+      # this the run dies mid-way with an opaque "AxiosError: Request failed
+      # with status code 401" that does not say which secret is bad.
+      - name: Preflight - validate both PATs
+        env:
+          PERSONAL_TOKEN: ${{ secrets.SUMMARY_GITHUB_TOKEN }}
+          WORK_TOKEN: ${{ secrets.WORK_GITHUB_TOKEN }}
+        run: |
+          # -e off: failures are collected and reported together, not on the
+          # first one, so a single run tells you about both tokens.
+          set +e -u
+          fail=0
+
+          check() {
+            name=$1
+            token=$2
+            expected=$3
+
+            if [ -z "$token" ]; then
+              echo "::error::Secret $name is missing or empty."
+              fail=1
+              return
+            fi
+
+            headers=$(mktemp)
+            body=$(mktemp)
+            code=$(curl -sS -D "$headers" -o "$body" -w '%{http_code}' \
+              -H "Authorization: Bearer $token" \
+              -H "Accept: application/vnd.github+json" \
+              https://api.github.com/user)
+
+            case "$code" in
+              200)
+                # grep/sed instead of jq: no extra tool dependency.
+                login=$(tr ',' '
+' < "$body" | grep -m1 '"login"' | sed 's/.*"login"[[:space:]]*:[[:space:]]*"\([^"]*\)".*//')
+                if [ "$login" != "$expected" ]; then
+                  echo "::error::Secret $name authenticates as '$login', but '$expected' was expected. Wrong token in the wrong secret."
+                  fail=1
+                else
+                  echo "$name -> $login (ok)"
+                fi
+                ;;
+              401)
+                echo "::error::Secret $name rejected with 401. The PAT is expired, revoked, or malformed (stray newline / 'Bearer ' prefix / truncated paste). Regenerate it on the $expected account and update the secret."
+                fail=1
+                ;;
+              403)
+                echo "::error::Secret $name got 403. Missing scope, rate limited, or SAML SSO authorization required for this PAT."
+                fail=1
+                ;;
+              *)
+                echo "::error::Secret $name got HTTP '$code' from /user."
+                fail=1
+                ;;
+            esac
+
+            # Classic PATs report their own expiry. Surface it, because a
+            # monthly schedule can go stale for weeks before anyone notices.
+            expiry=$(grep -i '^github-authentication-token-expiration:' "$headers" | cut -d: -f2- | tr -d '\r' | sed 's/^ *//')
+            if [ -n "$expiry" ]; then
+              exp_ts=$(date -d "$expiry" +%s 2>/dev/null)
+              if [ -n "$exp_ts" ]; then
+                left=$(( (exp_ts - $(date +%s)) / 86400 ))
+                echo "  $name expires $expiry ($left days left)"
+                if [ "$left" -lt 45 ]; then
+                  echo "::warning::$name expires in $left days. With a monthly schedule that breaks between runs - regenerate it with no expiration."
+                fi
+              fi
+            fi
+          }
+
+          check SUMMARY_GITHUB_TOKEN "$PERSONAL_TOKEN" JanoAngulo
+          check WORK_GITHUB_TOKEN    "$WORK_TOKEN"     johnrusselangulo-cp
+
+          if [ "$fail" -ne 0 ]; then
+            echo "Preflight failed - no cards regenerated, nothing committed."
+            exit 1
+          fi
+
       # Personal account -> profile-summary-card-output/github_dark/
-      # AUTO_PUSH off: we do one commit/push at the end so the PATs are
-      # only used to read the GitHub API, never to push.
-      - uses: vn7n24fzkq/github-profile-summary-cards@release
+      # AUTO_PUSH off: one commit/push at the end, so the PATs are only ever
+      # used to read the GitHub API, never to push.
+      - name: Generate personal cards
+        uses: vn7n24fzkq/github-profile-summary-cards@release
         env:
           GITHUB_TOKEN: ${{ secrets.SUMMARY_GITHUB_TOKEN }}
         with:
@@ -26,20 +112,22 @@ jobs:
           BRANCH_NAME: main
           AUTO_PUSH: false
 
-      # The action wipes ALL of profile-summary-card-output/ on each run,
-      # not just its own theme. Stash the personal cards before the work
-      # step deletes them, then restore afterwards.
+      # The action runs `sudo rm -rf ./profile-summary-card-output/` on every
+      # invocation, wiping ALL themes and not just its own. Stash the personal
+      # cards outside the workspace before the work step deletes them.
       - name: Stash personal cards
         run: |
+          set -eu
           rm -rf "$RUNNER_TEMP/personal-cards"
           cp -r profile-summary-card-output/github_dark "$RUNNER_TEMP/personal-cards"
 
-      # Work account, same github_dark theme so colors match the personal
-      # cards. It also outputs to a github_dark folder, so we rename it to
-      # work/ afterwards to avoid colliding with the personal cards.
-      # Uses a work-account PAT for private-repo commit counts. That PAT
-      # cannot push to this repo, so AUTO_PUSH must stay off here.
-      - uses: vn7n24fzkq/github-profile-summary-cards@release
+      # Work account, same github_dark theme so the colors match the personal
+      # cards. It also writes to a github_dark folder, so it gets renamed to
+      # work/ afterwards to avoid colliding. Uses a work-account PAT for
+      # private-repo commit counts; that PAT cannot push here, so AUTO_PUSH
+      # must stay off.
+      - name: Generate work cards
+        uses: vn7n24fzkq/github-profile-summary-cards@release
         env:
           GITHUB_TOKEN: ${{ secrets.WORK_GITHUB_TOKEN }}
         with:
@@ -49,20 +137,38 @@ jobs:
           BRANCH_NAME: main
           AUTO_PUSH: false
 
-      # Move the work cards to work/ and restore the personal cards the
-      # work step wiped, so both sets survive with identical colors.
+      # Move the work cards to work/ and restore the personal cards the work
+      # step wiped, so both sets survive with identical colors.
       - name: Separate work cards and restore personal
         run: |
+          set -eu
           rm -rf profile-summary-card-output/work
           mv profile-summary-card-output/github_dark profile-summary-card-output/work
           cp -r "$RUNNER_TEMP/personal-cards" profile-summary-card-output/github_dark
+          # Both invocations write a theme-preview README at the output root and
+          # the second overwrites the first, so it always described the work
+          # account. It is unused - drop it instead of committing wrong content.
+          rm -f profile-summary-card-output/README.md
+
+      # Refuse to commit a half result. Without this, one silently empty
+      # generation would commit a wipe of the other account's cards.
+      - name: Verify both card sets exist
+        run: |
+          set -eu
+          for dir in profile-summary-card-output/github_dark profile-summary-card-output/work; do
+            count=$(find "$dir" -name '*.svg' -type f | wc -l)
+            echo "$dir: $count svg"
+            [ "$count" -gt 0 ] || { echo "::error::$dir contains no SVGs."; exit 1; }
+          done
 
       # Single push with the workflow token, which owns this repo.
       - name: Commit and push cards
         run: |
+          set -eu
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add profile-summary-card-output
+          # -A so the removed output README is staged as a deletion too.
+          git add -A profile-summary-card-output
           if git diff --cached --quiet; then
             echo "No card changes."
           else
